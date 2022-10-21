@@ -1,0 +1,144 @@
+#include "Operator.h"
+#include "LOG.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+
+void operator_toString(const Operator* op){
+	printf("\nop_name:%s\n", op->op_name);
+	printf("level:%u\n", op->level);
+	printf("para_num:%u\n\n", op->para_num);
+}
+
+void operator_construct(Operator** op,char* const op_name,const unsigned level,
+	const unsigned para_num, void (*func)(const unsigned para_num,const double* para_arr,double* res)
+){
+
+	*op = malloc(sizeof(Operator));
+	(*op)->op_name = op_name;
+	(*op)->level = level;
+	(*op)->para_num = para_num;
+
+	(*op)->func = func;
+	(*op)->toString = operator_toString;
+}
+
+void operator_destory(Operator** op){
+	free(*op);
+	*op = NULL;
+	DEBUG_LOG//将消息记录到 Unity 控制台。//("[DEBUG]: operator_destory");
+}
+
+void operator_getFuncBy_op_name(const char* op_name, Operator** res_op){
+	unsigned i = 0;
+	for(;i < __op_num__;i++){
+		if(strcmp(__operator_array__[i]->op_name,op_name) == 0){
+			*res_op = __operator_array__[i];
+			break;
+		}
+	}
+	if (i >= __op_num__){
+		*res_op = NULL;/* not found */
+	}
+}
+
+void operator_func_add(const unsigned para_num,const double* para_arr,double* res){
+	*res = para_arr[0] + para_arr[1];
+}
+
+void operator_func_minus(const unsigned para_num,const double* para_arr,double* res){
+	*res = para_arr[0] - para_arr[1];
+}
+
+
+void operator_func_multiply(const unsigned para_num,const double* para_arr,double* res){
+	*res = para_arr[0] * para_arr[1];
+}
+
+void operator_func_divide(const unsigned para_num,const double* para_arr,double* res){
+	*res = para_arr[0] / para_arr[1];
+}
+
+void operator_func_leftBracket(const unsigned para_num,const double* para_arr,double* res){
+	*res = 0;
+}
+
+void operator_func_threemax(const unsigned para_num,const double* para_arr,double* res){
+	double a = para_arr[0];
+	double b = para_arr[1];
+	double c = para_arr[2];
+	double max = a;
+	if (max < b){
+		max = b;
+	}
+	if(max < c){
+		max = c;
+	}
+	*res = max;
+}
+
+void operator_func_power(const unsigned para_num,const double* para_arr,double* res){
+	*res = pow(para_arr[0],para_arr[1]);
+}
+
+void operator_func_sqrt(const unsigned para_num,const double* para_arr,double* res){
+	*res = sqrt(para_arr[0]);
+}
+
+unsigned init_operator_array(){
+	__op_num__ = 7;
+	__operator_array__ = malloc(sizeof(Operator*)*__op_num__);
+
+	Operator *add = NULL;
+	operator_construct(&add,"+",1024,2,operator_func_add);
+
+	Operator *minus = NULL;
+	operator_construct(&minus,"-",1024,2,operator_func_minus);
+
+	Operator *multiply = NULL;
+	operator_construct(&multiply,"*",1025,2,operator_func_multiply);
+
+	Operator *divide = NULL;
+	operator_construct(&divide,"/",1025,2,operator_func_divide);
+
+	Operator *threemax = NULL;
+	operator_construct(&threemax,"threemax",1027,3,operator_func_threemax);
+
+	Operator *power = NULL;
+	operator_construct(&power,"^",1026,2,operator_func_power);
+
+	Operator *sqrt = NULL;
+	operator_construct(&sqrt,"sqrt",1027,1,operator_func_sqrt);
+
+	// Operator *leftBracket = NULL;
+	// operator_construct(&threemax,"(",__MAX_LEVEL__,0,operator_func_leftBracket);
+
+	__operator_array__[0] = add;
+	__operator_array__[1] = minus;
+	__operator_array__[2] = multiply;
+	__operator_array__[3] = divide;
+	__operator_array__[4] = threemax;
+	__operator_array__[5] = power;
+	__operator_array__[6] = sqrt;
+
+	return __op_num__;
+}
+
+int main(void){
+
+	unsigned __op_num__ = init_operator_array();
+
+	Operator* op = NULL;
+	operator_getFuncBy_op_name("threemax",&op);
+
+	double para_arr[] = {1.0,0.0,-1};
+	double res = 0;
+	op->func(op->para_num,para_arr,&res);
+	op->toString(op);
+	printf("res:%llf\n", res);
+
+	operator_destory(&op);
+	return 0;
+}
